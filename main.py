@@ -20,6 +20,7 @@ JUMP_SPEED = -16
 COYOTE_TIME = 0.1
 JUMP_BUFFER_TIME = 0.1
 GROUND_LEVEL_Y = SCREEN_HEIGHT - 40
+INTERACT_IDLE_THRESHOLD = 5.0
 
 LEVEL_WIDTH = 4000
 LEVEL_PLATFORMS = [
@@ -87,6 +88,8 @@ class Player:
         self.lives = MAX_LIVES
         w, h = self.sprite.width * 0.6, self.sprite.height * 0.8
         self.collision_box = Rect(0, 0, w, h)
+        self.idle_timer = 0.0
+        self.interact_image = 'character_robot_interact'
 
     def update(self):
         delta_time = 1 / 60
@@ -138,11 +141,23 @@ class Player:
         self.collision_box.centerx = int(self.sprite.x)
         self.collision_box.centery = int(self.sprite.y + 8)
 
+        moving_horiz = abs(self.velocity_x) > 0.1
+        if not moving_horiz and self.is_on_ground:
+            self.idle_timer += delta_time
+        else:
+            self.idle_timer = 0.0
+
+        if self.idle_timer >= INTERACT_IDLE_THRESHOLD:
+            self.sprite.image = self.interact_image
+            return
+
         if not self.is_on_ground:
             self.sprite.image = self.jump_image if self.velocity_y < 0 else self.fall_image
+
         elif abs(self.velocity_x) > 0.1:
             self.animation_frame = (self.animation_frame + 1) % (len(self.walk_images) * 6)
             self.sprite.image = self.walk_images[self.animation_frame // 6]
+
         else:
             self.sprite.image = self.idle_image
 
